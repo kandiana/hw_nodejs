@@ -1,16 +1,14 @@
-const http = require('http')
+const express = require('express')
+const { PORT } = require('./config')
 
-const server = http.createServer((req, res) => {
-	if (req.url === '/ping') {
-		return res.end('pong')
-	}
+const app = express()
 
-	res.statusCode = 404
-	return res.end('Not Found')
+app.use(express.json())
+
+app.get('/ping', (req, res) => {
+	res.send('pong')
 })
 
-const PORT = 3000
-
-server.listen(PORT, () => {
-	console.log(`Server started in port ${PORT}`)
+app.listen(PORT, () => {
+	console.log(`Server started on port ${PORT}`)
 })
