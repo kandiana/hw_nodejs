@@ -1,14 +1,16 @@
 const express = require('express')
-const { PORT } = require('./config')
+const { PORT, imgFolder, path } = require('./config')
+
+const { nanoid } = require('nanoid')
 
 const multer = require('multer')
 
 const storage = multer.diskStorage({
 	destination: function (req, file, cb) {
-		cb(null, __dirname + '/imgs/')
+		cb(null, imgFolder)
 	},
 	filename: function (req, file, cb) {
-		cb(null, file.originalname) // modified here  or user file.mimetype
+		cb(null, `${nanoid()}.${file.mimetype.split('/')[1]}`)
 	},
 })
 
@@ -24,11 +26,11 @@ app.get('/ping', (req, res) => {
 
 app.post('/upload', upload.single('image'), (req, res) => {
 	console.log(req.file, req.body)
-	res.send('ok')
+	res.send(req.file.filename.split('.')[0])
 })
 
 app.get('/', (req, res) => {
-	res.sendFile(__dirname + '/index.html')
+	res.sendFile(path.resolve(__dirname, '../index.html'))
 })
 
 app.listen(PORT, () => {
