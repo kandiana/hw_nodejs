@@ -1,4 +1,5 @@
 const path = require('path')
+const fs = require('fs')
 
 const express = require('express')
 const { PORT, imgFolder } = require('./config')
@@ -17,6 +18,8 @@ const storage = multer.diskStorage({
 		cb(null, `${nanoid()}_original.${file.mimetype.split('/')[1]}`)
 	},
 })
+
+const { replaceBackground } = require('backrem')
 
 const upload = multer({ storage: storage })
 
@@ -40,11 +43,8 @@ app.get('/image/:id', (req, res) => {
 	const imgId = req.params.id
 	const img = db.findOne(imgId)
 	if (!img) {
-		res.status(404).send('Not Found')
+		return res.status(404).send('Not Found')
 	}
-
-	console.log(imgFolder)
-	console.log(path.resolve(imgFolder, `${img.id}_original.${img.mimetype}`))
 
 	return res.download(path.resolve(imgFolder, `${img.id}_original.${img.mimetype}`))
 })
@@ -67,7 +67,7 @@ app.delete('/image/:id', async (req, res) => {
 	const imgId = req.params.id
 
 	if (!db.findOne(imgId)) {
-		res.status(404).send('Not Found')
+		return res.status(404).send('Not Found')
 	}
 
 	const id = await db.remove(imgId)
@@ -84,9 +84,36 @@ app.get('/merge?*', async (req, res) => {
 			const [key, value] = el.split('=')
 			parameters[key] = decodeURIComponent(value)
 		})
-	console.log(parameters)
 
-	return res.json('ok')
+	const frontId = parameters.front
+	const backId = parameters.back
+
+	const frontImg = db.findOne(frontId)
+	const backImg = db.findOne(backId)
+
+	if (!frontImg || !backImg) {
+		return res.status(404).send('Not Found')
+	}
+
+	const frontFile = fs.createReadStream(path.resolve(imgFolder, `${frontId}_original.${frontImg.mimetype}`))
+
+	const backFile = fs.createReadStream(path.resolve(imgFolder, `${backId}_original.${backImg.mimetype}`))
+
+	const color = parameters.color ? parameters.color.split(',').map((el) => +el) : undefined
+	const threshold = parameters.threshold ? +parameters.threshold : undefined
+
+	const result = replaceBackground(frontFile, backFile, color, threshold)
+		.then(
+			(readableStream) => {
+				readableStream.pipe(res)
+			},
+			(error) => {
+				return res.send('wrong file dimensions')
+			}
+		)
+		.then(() => {
+			return res.download
+		})
 })
 
 app.get('/', (req, res) => {
