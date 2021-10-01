@@ -15,6 +15,7 @@
 		"prettier": "2.4.1"
 	},
 	"dependencies": {
+		"express": "^4.17.1",
 		"nanoid": "^3.1.28"
 	}
 }
