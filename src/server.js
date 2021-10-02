@@ -46,17 +46,15 @@ app.get('/image/:id', (req, res) => {
 		return res.status(404).send('Not Found')
 	}
 
-	return res.download(path.resolve(imgFolder, `${img.id}_original.${img.mimetype}`))
+	return res.download(path.resolve(imgFolder, `${img.id}_original.${img.mimetype.split('/')[1]}`))
 })
 
 app.post('/upload', upload.single('image'), async (req, res) => {
 	console.log(req.file, req.body)
-	const size = req.file.size
-	const mimetype = req.file.mimetype.split('/')[1]
 	const filename = req.file.filename
 	const id = filename.substr(0, filename.lastIndexOf('_'))
 
-	const imgFile = new Img(id, mimetype, size)
+	const imgFile = new Img(id, req.file.mimetype, req.file.size)
 
 	await db.insert(imgFile)
 
@@ -95,9 +93,9 @@ app.get('/merge?*', async (req, res) => {
 		return res.status(404).send('Not Found')
 	}
 
-	const frontFile = fs.createReadStream(path.resolve(imgFolder, `${frontId}_original.${frontImg.mimetype}`))
+	const frontFile = fs.createReadStream(path.resolve(imgFolder, `${frontId}_original.${frontImg.mimetype.split('/')[1]}`))
 
-	const backFile = fs.createReadStream(path.resolve(imgFolder, `${backId}_original.${backImg.mimetype}`))
+	const backFile = fs.createReadStream(path.resolve(imgFolder, `${backId}_original.${backImg.mimetype.split('/')[1]}`))
 
 	const color = parameters.color ? parameters.color.split(',').map((el) => +el) : undefined
 	const threshold = parameters.threshold ? +parameters.threshold : undefined
@@ -112,6 +110,7 @@ app.get('/merge?*', async (req, res) => {
 			}
 		)
 		.then(() => {
+			res.header('Content-disposition', 'attachment; filename=merge.jpeg')
 			return res.download
 		})
 })

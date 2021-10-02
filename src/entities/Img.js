@@ -16,7 +16,7 @@ module.exports = class Img {
 	// }
 
 	async removeOriginal() {
-		await removeFile(path.resolve(imgFolder, `${this.id}_original.${this.mimetype}`))
+		await removeFile(path.resolve(imgFolder, `${this.id}_original.${this.mimetype.split('/')[1]}`))
 	}
 
 	toPublicJSON() {
