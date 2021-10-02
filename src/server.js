@@ -110,6 +110,7 @@ app.get('/merge?*', async (req, res) => {
 		)
 		.then(() => {
 			res.header('Content-disposition', 'attachment; filename=merge.jpeg')
+			res.header('Content-Type', frontImg.mimetype)
 			return res.download
 		})
 })
