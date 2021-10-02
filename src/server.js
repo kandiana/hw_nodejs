@@ -50,7 +50,6 @@ app.get('/image/:id', (req, res) => {
 })
 
 app.post('/upload', upload.single('image'), async (req, res) => {
-	console.log(req.file, req.body)
 	const filename = req.file.filename
 	const id = filename.substr(0, filename.lastIndexOf('_'))
 
@@ -100,12 +99,12 @@ app.get('/merge?*', async (req, res) => {
 	const color = parameters.color ? parameters.color.split(',').map((el) => +el) : undefined
 	const threshold = parameters.threshold ? +parameters.threshold : undefined
 
-	const result = replaceBackground(frontFile, backFile, color, threshold)
+	replaceBackground(frontFile, backFile, color, threshold)
 		.then(
 			(readableStream) => {
 				readableStream.pipe(res)
 			},
-			(error) => {
+			() => {
 				return res.send('wrong file dimensions')
 			}
 		)
