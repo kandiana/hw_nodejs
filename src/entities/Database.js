@@ -31,8 +31,7 @@ class Database extends EventEmitter {
 	}
 
 	async insert(img) {
-		//    await img.saveOriginal(originalContent);
-
+		// сохранение картинки идет в другом месте
 		this.idToImg[img.id] = img
 
 		this.emit('changed')
