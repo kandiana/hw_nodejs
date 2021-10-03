@@ -10,6 +10,7 @@ const { nanoid } = require('nanoid')
 
 const multer = require('multer')
 
+// задаем папку и имя для заргужаемой картинки
 const storage = multer.diskStorage({
 	destination: function (req, file, cb) {
 		cb(null, imgFolder)
@@ -96,8 +97,30 @@ app.get('/merge?*', async (req, res) => {
 
 	const backFile = fs.createReadStream(path.resolve(imgFolder, `${backId}_original.${backImg.mimetype.split('/')[1]}`))
 
-	const color = parameters.color ? parameters.color.split(',').map((el) => +el) : undefined
-	const threshold = parameters.threshold ? +parameters.threshold : undefined
+	let color = parameters.color ? parameters.color.split(',').map((el) => +el) : undefined
+
+	// проверка, что цвет указан в нужном формате
+	if(!(color?.length === 3)) {
+		console.log('Wrong background color, white will be used instead')
+		color = undefined
+	}
+	else {
+		for(const number in color) {
+			if(isNaN(number) || number < 0 || number > 255) {
+				console.log('Wrong background color, white will be used instead ')
+				color = undefined
+				break
+			}
+		}
+	}
+	
+	let threshold = parameters.threshold ? +parameters.threshold : undefined
+
+	// проверка, что порог указан верно
+	if(isNaN(threshold) || threshold < 0 || threshold > 100) {
+		console.log('Wrong threshold, 0 will be used instead')
+		threshold = undefined
+	}
 
 	replaceBackground(frontFile, backFile, color, threshold)
 		.then(
