@@ -1,15 +1,14 @@
 const path = require('path')
 const fs = require('fs')
+const { nanoid } = require('nanoid')
+const { replaceBackground } = require('backrem')
 
 const express = require('express')
 const { PORT, imgFolder } = require('./config')
 const db = require('./entities/Database')
 const Img = require('./entities/Img')
 
-const { nanoid } = require('nanoid')
-
 const multer = require('multer')
-
 // задаем папку и имя для заргужаемой картинки
 const storage = multer.diskStorage({
 	destination: function (req, file, cb) {
@@ -19,10 +18,9 @@ const storage = multer.diskStorage({
 		cb(null, `${nanoid()}_original.${file.mimetype.split('/')[1]}`)
 	},
 })
-
-const { replaceBackground } = require('backrem')
-
 const upload = multer({ storage: storage })
+
+/***********************************************/
 
 const app = express()
 
@@ -34,12 +32,14 @@ app.get('/ping', (req, res) => {
 	return res.json({ ping: 'pong' })
 })
 
+// вывод списка загруженных файлов
 app.get('/list', (req, res) => {
 	const allImgs = db.find().map((img) => img.toPublicJSON())
 
 	return res.json(allImgs)
 })
 
+// скачивание файла
 app.get('/image/:id', (req, res) => {
 	const imgId = req.params.id
 	const img = db.findOne(imgId)
@@ -50,6 +50,7 @@ app.get('/image/:id', (req, res) => {
 	return res.download(path.resolve(imgFolder, `${img.id}_original.${img.mimetype.split('/')[1]}`))
 })
 
+// загрузка файла
 app.post('/upload', upload.single('image'), async (req, res) => {
 	const filename = req.file.filename
 	const id = filename.substr(0, filename.lastIndexOf('_'))
@@ -61,6 +62,7 @@ app.post('/upload', upload.single('image'), async (req, res) => {
 	return res.json({ id: id })
 })
 
+// удаление файла
 app.delete('/image/:id', async (req, res) => {
 	const imgId = req.params.id
 
@@ -73,6 +75,7 @@ app.delete('/image/:id', async (req, res) => {
 	return res.json({ id })
 })
 
+// замена фона
 app.get('/merge?*', async (req, res) => {
 	const parameters = {}
 	req.url
@@ -122,6 +125,7 @@ app.get('/merge?*', async (req, res) => {
 		threshold = undefined
 	}
 
+	// запуск функции замены фона; color и threshold - не обязательные параметры; по умолчанию color = [255,255,255], threshold = 0
 	replaceBackground(frontFile, backFile, color, threshold)
 		.then(
 			(readableStream) => {
@@ -138,6 +142,7 @@ app.get('/merge?*', async (req, res) => {
 		})
 })
 
+// открытие index.html, чтобы проще было подгружать картинки
 app.get('/', (req, res) => {
 	res.sendFile(path.resolve(__dirname, '../index.html'))
 })
